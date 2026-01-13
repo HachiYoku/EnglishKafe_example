@@ -4,6 +4,16 @@
     box-sizing: border-box;
 }
 
+/* Smooth scrolling and offset for anchors to account for fixed navbar */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Ensure anchored sections are not hidden behind the fixed navbar */
+section {
+    scroll-margin-top: 90px; /* roughly the navbar height */
+}
+
 /* navbar-sec */
 
 .navbar-sec {
@@ -180,6 +190,82 @@
     border-radius: 0px !important;
 }
 
+/* Ensure cards in service/menu sections are equal height and responsive */
+.row.card-container, #menu-sec .row {
+    align-items: stretch;
+}
+.row.card-container .card, #menu-sec .card, #service-sec .card-container .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.row.card-container .card .card-img-top, #menu-sec .card .card-img-top {
+    height: 280px; /* taller thumbnails for visual prominence */
+    object-fit: cover;
+}
+.row.card-container .card .card-body, #menu-sec .card .card-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Action container inside card that should stick to the bottom */
+.card-actions {
+    margin-top: auto; /* push actions to the bottom */
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Make service/menu cards a bit taller to accommodate larger images */
+.row.card-container .card, #menu-sec .card {
+    min-height: 460px;
+}
+
+@media (max-width: 768px) {
+  .row.card-container .card, #menu-sec .card {
+    min-height: auto;
+  }
+  .row.card-container .card .card-img-top, #menu-sec .card .card-img-top {
+    height: 200px; /* smaller images on narrow screens */
+  }
+}
+
+/* Line button style - increased specificity to override Bootstrap defaults */
+.btn.btn-line,
+.btn-line,
+.btn-line.btn,
+.btn.btn-line.btn-sm {
+    background-color: #00C300 !important;
+    color: #fff !important;
+    border: none !important;
+    padding: 6px 10px !important;
+}
+.btn.btn-line i, .btn-line i {
+    color: #fff !important;
+}
+.btn.btn-line:hover,
+.btn-line:hover,
+.btn-line:focus {
+    background-color: #00B000 !important;
+    color: #fff !important;
+}
+
+/* Make the Line button more prominent on course/service cards */
+.btn.btn-line, .btn-line {
+    font-size: 16px !important;
+    padding: 10px 14px !important;
+    border-radius: 4px !important;
+}
+.btn.btn-line.btn-sm, .btn-line.btn-sm {
+    font-size: 14px !important;
+    padding: 8px 12px !important;
+}
+.btn-line i {
+    font-size: 18px !important;
+    margin-right: 8px;
+}
+
 
 #service-sec .card-container h5{
     font-size: 32px;
@@ -346,6 +432,10 @@
     font-family: "Ubuntu", sans-serif;
     font-weight: 500;
 }
+#chef-sec .card-text{
+    /* preserve newlines and wrapping for multi-line instructor descriptions */
+    white-space: pre-wrap;
+}
 
 #chef-sec .connect-text{
     border-bottom: 2px solid black;
@@ -412,9 +502,26 @@
 }
 
 #videos-sec .card-title{
-    color: #9C27B0;
-    font-family: "Ubuntu", sans-serif;
-    font-weight: bold;
+        color: #4A148C; /* deeper purple for stronger contrast */
+        font-family: "Ubuntu", sans-serif;
+        font-weight: 800;
+        font-size: 44px; /* made larger per request */
+        margin-bottom: 0.5rem;
+}
+
+/* Responsive: scale titles down on small screens */
+@media (max-width: 768px) {
+    #videos-sec .card-title {
+        font-size: 22px;
+    }
+}
+
+#videos-sec .video-description{
+    font-size: 14px;
+    font-weight: 400;
+    color: #333;
+    margin-top: 0.5rem;
+    line-height: 1.4;
 }
     background-color: transparent;
     border:2px solid black;
@@ -426,91 +533,105 @@
 
 
 
- /* reservation-sec   */
+/* reservation / enrollment section */
 
- #reservation-sec {
-    background-image: url(images/contact-img.jpg) !important;
-    background-size: cover;  /* Ensures image fits */
-    background-position: center;  /* Centers image */
-    background-repeat: no-repeat; /* Prevents tiling */
-    min-height: 80vh;  /* Ensures it takes up space */
-    
+/* Apply same rules for reservation and enrollment IDs (static vs template) */
+/* Compact enrollment / reservation styles */
+#reservation-sec, #enrollment-sec {
+    /* layered background: dark gradient over image to reduce visual prominence */
+    background-image: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url(images/contact-img.jpg) !important;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-blend-mode: overlay;
+    position: relative;
+    padding: 40px 0; /* reduced vertical spacing */
 }
 
-#reservation-sec .container-fluid{
-    background: rgba(0, 0, 0, 0.7);
-    position: absolute;
+#reservation-sec .container-fluid,
+#enrollment-sec .container-fluid{
+    background: rgba(0, 0, 0, 0.6);
+    position: relative;
     width: 100%;
-    height: 80%;    
+    min-height: 220px; /* smaller height for compact layout */
+    padding: 20px 0; /* reduced internal spacing */
+    box-sizing: border-box;
 }
 
-
- #reservation-sec h1{
+#reservation-sec h1, #enrollment-sec h1{
     background-color: #Ebc23d;
-    width: 300px;
+    width: 220px; /* slightly narrower title */
     display: block;
-    padding: 5px;
+    padding: 4px 6px;
     margin: 0 auto !important; 
-    font-size: 32px;
+    font-size: 24px; /* smaller heading */
     font-family: "Ubuntu", sans-serif;
 }
 
 
-#reservation-sec .contact-box{
+#reservation-sec .contact-box, #enrollment-sec .contact-box{
     background-color: white;
-    /* border: 1px solid red !important; */
-    width: 60%;
+    width: 100%;
+    max-width: 700px; /* narrower form container */
+    margin: 0 auto;
+    padding: 14px; /* reduced padding */
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
 }
 
-#reservation-sec .input-control{
+#reservation-sec .input-control, #enrollment-sec .input-control{
     position: relative;
 }
 
-#reservation-sec .form-control {
-    height: 50px;
-    padding-left: 40px;
+#reservation-sec .form-control, #enrollment-sec .form-control {
+    height: 40px; /* more compact inputs */
+    padding-left: 14px; /* reduce left padding so inputs appear tighter */
+    font-size: 14px;
 }
 
-#reservation-sec .form-control::placeholder {
+#reservation-sec .form-control::placeholder, #enrollment-sec .form-control::placeholder {
     font-family: "Spline Sans", sans-serif ;
+    font-size: 13px;
 }
 
-#reservation-sec .form-control:focus {
+#reservation-sec .form-control:focus, #enrollment-sec .form-control:focus {
     border: 2px solid #Ebc23d;
     border-color: #Ebc23d; 
     box-shadow: none !important;
     outline: none;
 }
 
-#reservation-sec .input-group-text {
+#reservation-sec .input-group-text, #enrollment-sec .input-group-text {
     position: absolute;
     top: 50%;
-    left: 10px;
+    left: 8px;
     transform: translateY(-50%);
     background-color: transparent;
     border: none;
-    font-size: 16px;
+    font-size: 14px;
     color: gray;
 }
 
-#reservation-sec textarea{
-    padding-left: 20px !important;
-    height: 90px !important;
+#reservation-sec textarea, #enrollment-sec textarea{
+    padding-left: 12px !important;
+    height: 70px !important; /* slightly smaller textarea */
+    font-size: 14px;
 }
 
 
-#reservation-sec button{
-    width: 200px;
+#reservation-sec button, #enrollment-sec button{
+    width: 140px; /* narrower CTA */
     font-family: "Ubuntu", sans-serif;
-    font-size: 16px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 600;
     text-transform: uppercase;
-    padding: 5px 10px;
-    margin-top: 30px;
-    /* margin-left: 10px; */
+    padding: 6px 8px;
+    margin-top: 18px; /* reduced top margin */
     border-radius: 0px;
     background-color: #Ebc23d !important;
 }
+
+/* Make sure footer sits above any backgrounds */
+.footer{ position: relative; z-index: 2; }
 
 
 /* footer-sec */
@@ -641,4 +762,23 @@
 .footer-copyright{
     background-color: #29210a;
     color: white;
+}
+
+/* On small screens, hide the large background image for clarity and performance */
+@media (max-width: 576px) {
+    #reservation-sec, #enrollment-sec {
+        background-image: none !important;
+        background-color: #111; /* dark fallback */
+        padding: 24px 0;
+    }
+
+    #reservation-sec .container-fluid, #enrollment-sec .container-fluid{
+        min-height: auto;
+        padding: 12px 0;
+    }
+
+    #reservation-sec .contact-box, #enrollment-sec .contact-box{
+        max-width: 100%;
+        padding: 12px;
+    }
 }

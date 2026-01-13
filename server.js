@@ -58,6 +58,17 @@ db.serialize(() => {
     embed_id TEXT
   )`);
 
+  // Ensure 'description' column exists on videos table (for older DBs)
+  db.all("PRAGMA table_info(videos)", (err, cols) => {
+    if (err) return console.error(err);
+    const hasDescription = cols.some(c => c.name === 'description');
+    if (!hasDescription) {
+      db.run("ALTER TABLE videos ADD COLUMN description TEXT", (err) => {
+        if (err) console.error('Failed to add description column to videos:', err);
+      });
+    }
+  });
+
   // Insert default content if not exists
   db.get("SELECT COUNT(*) as count FROM content", (err, row) => {
     if (row.count === 0) {
@@ -142,10 +153,32 @@ app.post('/admin/content', (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
 
   const { section, key, value } = req.body;
-  db.run("INSERT OR REPLACE INTO content (section, key, value) VALUES (?, ?, ?)", [section, key, value], (err) => {
-    if (err) console.error(err);
-    res.redirect('/admin');
-  });
+
+  // Support single key/value or multiple (when forms include multiple inputs with same name)
+  const isKeyArray = Array.isArray(key);
+  const isValueArray = Array.isArray(value);
+
+  if (isKeyArray || isValueArray) {
+    // Normalize to arrays of equal length
+    const keys = isKeyArray ? key : [key];
+    const values = isValueArray ? value : [value];
+
+    const len = Math.max(keys.length, values.length);
+    const stmt = db.prepare("INSERT OR REPLACE INTO content (section, key, value) VALUES (?, ?, ?)");
+    for (let i = 0; i < len; i++) {
+      const k = keys[i];
+      const v = values[i];
+      // Skip empty keys
+      if (!k) continue;
+      stmt.run(section, k, v, (err) => { if (err) console.error(err); });
+    }
+    stmt.finalize(() => res.redirect('/admin'));
+  } else {
+    db.run("INSERT OR REPLACE INTO content (section, key, value) VALUES (?, ?, ?)", [section, key, value], (err) => {
+      if (err) console.error(err);
+      res.redirect('/admin');
+    });
+  }
 });
 
 // Upload image and update content
@@ -178,14 +211,16 @@ app.post('/admin/menu', upload.single('image'), (req, res) => {
   });
 });
 
-// Add chef
+// Add instructor (stored in chefs table)
 app.post('/admin/chef', upload.single('image'), (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
 
-  const { name, role } = req.body;
+  // Admin form now submits 'description' for instructors.
+  const { name, description } = req.body;
   const image = req.file ? `/uploads/${req.file.filename}` : '';
 
-  db.run("INSERT INTO chefs (name, role, image) VALUES (?, ?, ?)", [name, role, image], (err) => {
+  // Keep DB column 'role' for backward compatibility; store description there.
+  db.run("INSERT INTO chefs (name, role, image) VALUES (?, ?, ?)", [name, description, image], (err) => {
     if (err) console.error(err);
     res.redirect('/admin');
   });
@@ -200,6 +235,27 @@ app.post('/admin/menu/delete/:id', (req, res) => {
     if (err) console.error(err);
     res.redirect('/admin');
   });
+});
+
+// Update menu item
+app.post('/admin/menu/update/:id', upload.single('image'), (req, res) => {
+  if (!req.session.loggedIn) return res.redirect('/login');
+
+  const id = req.params.id;
+  const { name, description, price } = req.body;
+  const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+
+  if (imagePath) {
+    db.run("UPDATE menu SET name = ?, description = ?, price = ?, image = ? WHERE id = ?", [name, description, price, imagePath, id], (err) => {
+      if (err) console.error(err);
+      res.redirect('/admin');
+    });
+  } else {
+    db.run("UPDATE menu SET name = ?, description = ?, price = ? WHERE id = ?", [name, description, price, id], (err) => {
+      if (err) console.error(err);
+      res.redirect('/admin');
+    });
+  }
 });
 
 // Delete chef
@@ -217,13 +273,13 @@ app.post('/admin/chef/delete/:id', (req, res) => {
 app.post('/admin/video', (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
 
-  const { title, youtube_link } = req.body;
+  const { title, youtube_link, description } = req.body;
   // Extract video ID from YouTube link
-  const videoIdMatch = youtube_link.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+  const videoIdMatch = youtube_link.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/]+\/.+\/(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
   const embed_id = videoIdMatch ? videoIdMatch[1] : null;
 
   if (embed_id) {
-    db.run("INSERT INTO videos (title, youtube_link, embed_id) VALUES (?, ?, ?)", [title, youtube_link, embed_id], (err) => {
+    db.run("INSERT INTO videos (title, youtube_link, embed_id, description) VALUES (?, ?, ?, ?)", [title, youtube_link, embed_id, description || ''], (err) => {
       if (err) console.error(err);
       res.redirect('/admin');
     });
@@ -243,6 +299,30 @@ app.post('/admin/video/delete/:id', (req, res) => {
   });
 });
 
+// Update video
+app.post('/admin/video/update/:id', (req, res) => {
+  if (!req.session.loggedIn) return res.redirect('/login');
+
+  const id = req.params.id;
+  const { title, youtube_link, description } = req.body;
+  // Extract video ID from YouTube link
+  const videoIdMatch = youtube_link.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/]+\/.+\/(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+  const embed_id = videoIdMatch ? videoIdMatch[1] : null;
+
+  if (embed_id) {
+    db.run("UPDATE videos SET title = ?, youtube_link = ?, embed_id = ?, description = ? WHERE id = ?", [title, youtube_link, embed_id, description || '', id], (err) => {
+      if (err) console.error(err);
+      res.redirect('/admin');
+    });
+  } else {
+    // If the link is invalid, still update title/description but leave embed_id unchanged
+    db.run("UPDATE videos SET title = ?, youtube_link = ?, description = ? WHERE id = ?", [title, youtube_link, description || '', id], (err) => {
+      if (err) console.error(err);
+      res.redirect('/admin');
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
@@ -250,23 +330,28 @@ app.listen(PORT, () => {
 // Default content insertion
 function insertDefaultContent() {
   const defaultContent = [
-    ['home', 'slide1_title', 'Welcome to Brio Restaurant'],
-    ['home', 'slide1_text', 'Some representative placeholder content for the first slide.'],
-    ['home', 'slide2_title', 'The real taste of food'],
-    ['home', 'slide2_text', 'Some representative placeholder content for the second slide.'],
-    ['home', 'slide3_title', 'Only taste is real for food'],
-    ['home', 'slide3_text', 'Some representative placeholder content for the third slide.'],
-    ['about', 'title', 'About Brio Restaurant'],
-    ['about', 'text1', 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Excepturi perferendis magnam ea necessitatibus, officiis voluptas odit! Aperiam omnis, cupiditate laudantium velit nostrum, exercitationem accusamus, possimus soluta illo.Lorem ipsum dolor sit amet, consectetur adipisicing elit. Excepturi perferendis magnam ea necessitatibus, officiis voluptas odit.'],
-    ['about', 'text2', 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Excepturi perferendis magnam ea necessitatibus, officiis voluptas odit! Aperiam omnis, cupiditate laudantium velit nostrum.'],
-    ['services', 'home_delivery_title', 'Home Delivery'],
-    ['services', 'home_delivery_text', 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Excepturi perferendis magnam ea necessitatibus, officiis voluptas odit! Aperiam omnis, cupiditate laudantium velit nostrum.'],
-    ['services', 'birthday_party_title', 'Birthday Party'],
-    ['services', 'birthday_party_text', 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Excepturi perferendis magnam ea necessitatibus, officiis voluptas odit! Aperiam omnis, cupiditate laudantium velit nostrum.'],
-    ['services', 'wedding_party_title', 'Wedding Party'],
-    ['services', 'wedding_party_text', 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Excepturi perferendis magnam ea necessitatibus, officiis voluptas odit! Aperiam omnis, cupiditate laudantium velit nostrum.'],
-    ['services', 'event_party_title', 'Event Party'],
-    ['services', 'event_party_text', 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Excepturi perferendis magnam ea necessitatibus, officiis voluptas odit! Aperiam omnis, cupiditate laudantium velit nostrum.']
+    // Home slides
+    ['home', 'slide1_title', 'Learn English with EnglishKafe'],
+    ['home', 'slide1_text', 'Practical lessons, conversation practice, and progress tracking for all levels.'],
+    ['home', 'slide2_title', 'Speak Confidently'],
+    ['home', 'slide2_text', 'Live classes and speaking clubs to improve your fluency.'],
+    ['home', 'slide3_title', 'Prepare for Exams'],
+    ['home', 'slide3_text', 'Expert tutors and tailored courses for IELTS, TOEFL, and more.'],
+
+    // About
+    ['about', 'title', 'About EnglishKafe'],
+    ['about', 'text1', 'EnglishKafe offers structured courses and live practice sessions to help learners gain confidence and real-world English skills. Our instructors focus on communication, grammar, and exam readiness.'],
+    ['about', 'text2', 'We blend interactive lessons, video content, and community practice to make learning effective and enjoyable. Join learners worldwide and start improving today.'],
+
+    // Services -> Courses / Offerings
+    ['services', 'beginner_title', 'Beginner Course'],
+    ['services', 'beginner_text', 'Foundations of English: vocabulary, basic grammar, simple conversations.'],
+    ['services', 'intermediate_title', 'Intermediate Course'],
+    ['services', 'intermediate_text', 'Build fluency with guided speaking practice and expanded grammar.'],
+    ['services', 'conversation_title', 'Conversation Club'],
+    ['services', 'conversation_text', 'Weekly speaking sessions to practice real-life topics with peers.'],
+    ['services', 'examprep_title', 'Exam Preparation'],
+    ['services', 'examprep_text', 'Targeted coaching for IELTS, TOEFL and other standardized tests.']
   ];
 
   defaultContent.forEach(([section, key, value]) => {
