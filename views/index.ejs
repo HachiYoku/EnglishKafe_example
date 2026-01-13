@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="images/favicon-16x16.png" />
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Spline+Sans:wght@300..700&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <!-- animate css  -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
+    <!-- local css  -->
+    <link rel="stylesheet" href="styles.css" />
+    <title>Brio</title>
+  </head>
+  <body>
+
+    <!-- navbar-sec -->
+    <div class="navbar-sec">
+        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+            <div class="container-fluid d-flex justify-content-between align-items-center">
+              <a class="navbar-brand mx-4 my-auto" href="#">Brio</a>
+              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+              <div class="collapse navbar-collapse justify-content-end" id="navbarNavDropdown">
+                <ul class="navbar-nav">
+                  <li class="nav-item">
+                    <a class="nav-link mx-3" aria-current="page" href="#home-sec">Home</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link mx-3" href="#about-sec">About us</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link mx-3" href="#service-sec">services</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link mx-3" href="#menu-sec">Menu</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link mx-3" href="#chef-sec">Our Chefs</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link mx-3" href="#videos-sec">Videos</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link mx-3" href="#reservation-sec">Reservation</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </nav>
+    </div>
+
+    <!-- home-sec  -->
+    <section id="home-sec">
+        <div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="true">
+            <div class="carousel-indicators">
+              <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+              <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1" aria-label="Slide 2"></button>
+              <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2" aria-label="Slide 3"></button>
+            </div>
+            <div class="carousel-inner">
+              <div class="carousel-item active">
+                <div class="carousel-overlay"></div>
+                <img src="images/hero-img-1.jpg" class="d-block w-100" alt="hero-img-1">
+                <div class="carousel-caption d-none d-md-block">
+                  <h1><%= content.home ? content.home.slide1_title : 'Welcome to Brio Restaurant' %></h1>
+                  <p class="mt-4"><%= content.home ? content.home.slide1_text : 'Some representative placeholder content for the first slide.' %></p>
+                  <button type="button" class="btn btn-warning px-4 py-2">Get Start</button>
+                </div>
+              </div>
+              <div class="carousel-item">
+                <div class="carousel-overlay"></div>
+                <img src="images/hero-img-2.jpg" class="d-block w-100" alt="hero-img-2">
+                <div class="carousel-caption d-none d-md-block">
+                  <h1><%= content.home ? content.home.slide2_title : 'The real taste of food' %></h1>
+                  <p class="mt-4"><%= content.home ? content.home.slide2_text : 'Some representative placeholder content for the second slide.' %></p>
+                  <button type="button" class="btn btn-warning px-4 py-2">Get Start</button>
+                </div>
+              </div>
+              <div class="carousel-item">
+                <div class="carousel-overlay"></div>
+                <img src="images/hero-img-3.jpg" class="d-block w-100" alt="hero-img-3">
+                <div class="carousel-caption d-none d-md-block">
+                  <h1><%= content.home ? content.home.slide3_title : 'Only taste is real for food' %></h1>
+                  <p class="mt-4"><%= content.home ? content.home.slide3_text : 'Some representative placeholder content for the third slide.' %></p>
+                  <button type="button" class="btn btn-warning px-4 py-2">Get Start</button>
+                </div>
+              </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          </div>
+    </section>
+
+    <!-- About-sec  -->
+     <section id="about-sec">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 mt-5 mb-3">
+                    <h1 class="text-center my-4 mx-2 px-4 py-4"><%= content.about ? content.about.title : 'About Us' %></h1>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 d-block about-text mt-4 mb-4">
+                    <h2><span class="first-text">About</span> <span class="second-text">Brio</span> Resturant</h2>
+                    <p class="first-p mt-4"><%= content.about ? content.about.text1 : 'Lorem ipsum...' %></p>
+                    <p class="second-p mt-3"><%= content.about ? content.about.text2 : 'Lorem ipsum...' %></p>
+                </div>
+                <div class="col-md-6 about-img mt-4 mb-4">
+                    <div id="carouselExampleInterval" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                          <div class="carousel-item active" data-bs-interval="10000">
+                            <img src="images/hero-img-2.jpg" class="d-block w-100" alt="...">
+                          </div>
+                          <div class="carousel-item" data-bs-interval="2000">
+                            <img src="images/hero-img-3.jpg" class="d-block w-100" alt="...">
+                          </div>
+                          <div class="carousel-item">
+                            <img src="images/hero-img-4.jpg" class="d-block w-100" alt="...">
+                          </div>
+                        </div>
+                      </div>
+                </div>
+            </div>
+        </div>
+     </section>
+
+     <!-- service-sec  -->
+      <section id="service-sec">
+        <div class="container">
+          <div class="row">
+            <div class="col-12 mt-5 mb-3">
+                <h1 class="text-center my-4 mx-2 px-4 py-4">Services</h1>
+            </div>
+          </div>
+          <div class="row card-container row-cols-1 row-cols-md-2 g-4 p-3">
+            <div class="col">
+              <div class="card">
+                <img src="images/home-delivery.jpg" class="card-img-top" alt="...">
+                <div class="card-body">
+                  <h5 class="card-title"><%= content.services ? content.services.home_delivery_title : 'Home Delivery' %></h5>
+                  <p class="card-text"><%= content.services ? content.services.home_delivery_text : 'Lorem ipsum...' %></p>
+                  <button type="button" class="btn btn-warning">Book to reserve</button>
+                </div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card">
+                <img src="images/birthday-party.webp" class="card-img-top" alt="...">
+                <div class="card-body">
+                  <h5 class="card-title"><%= content.services ? content.services.birthday_party_title : 'Birthday Party' %></h5>
+                  <p class="card-text"><%= content.services ? content.services.birthday_party_text : 'Lorem ipsum...' %></p>
+                  <button type="button" class="btn btn-warning">Book to reserve</button>
+                </div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card">
+                <img src="images/weeding.jpg" class="card-img-top" alt="...">
+                <div class="card-body">
+                  <h5 class="card-title"><%= content.services ? content.services.wedding_party_title : 'Wedding Party' %></h5>
+                  <p class="card-text"><%= content.services ? content.services.wedding_party_text : 'Lorem ipsum...' %></p>
+                  <button type="button" class="btn btn-warning">Book to reserve</button>
+                </div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card">
+                <img src="images/event-party.jpg" class="card-img-top" alt="...">
+                <div class="card-body">
+                  <h5 class="card-title"><%= content.services ? content.services.event_party_title : 'Event Party' %></h5>
+                  <p class="card-text"><%= content.services ? content.services.event_party_text : 'Lorem ipsum...' %></p>
+                  <button type="button" class="btn btn-warning">Book to reserve</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- menu-sec -->
+      <section id="menu-sec">
+        <div class="container">
+          <div class="row">
+            <div class="col-12 mt-5 mb-3">
+                <h1 class="text-center my-4 mx-2 px-4 py-4">Menu</h1>
+            </div>
+          </div>
+          <div class="row">
+            <% menu.forEach(item => { %>
+              <div class="col-md-4 mb-4">
+                <div class="card">
+                  <img src="<%= item.image || 'images/default-menu.jpg' %>" class="card-img-top" alt="<%= item.name %>">
+                  <div class="card-body">
+                    <h5 class="card-title"><%= item.name %></h5>
+                    <p class="card-text"><%= item.description %></p>
+                    <p class="card-text"><strong>$<%= item.price %></strong></p>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      </section>
+
+      <!-- chef-sec -->
+      <section id="chef-sec">
+        <div class="container">
+          <div class="row">
+            <div class="col-12 mt-5 mb-3">
+                <h1 class="text-center my-4 mx-2 px-4 py-4">Our Chefs</h1>
+            </div>
+          </div>
+          <div class="row">
+            <% chefs.forEach(chef => { %>
+              <div class="col-md-4 mb-4">
+                <div class="card">
+                  <img src="<%= chef.image || 'images/default-chef.jpg' %>" class="card-img-top" alt="<%= chef.name %>">
+                  <div class="card-body">
+                    <h5 class="card-title"><%= chef.name %></h5>
+                    <p class="card-text"><%= chef.role %></p>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      </section>
+
+      <!-- videos-sec -->
+      <section id="videos-sec">
+        <div class="container">
+          <div class="row">
+            <div class="col-12 mt-5 mb-3">
+                <h1 class="text-center my-4 mx-2 px-4 py-4">Our Videos</h1>
+            </div>
+          </div>
+          <div class="row">
+            <% videos.forEach(video => { %>
+              <div class="col-md-6 mb-4">
+                <div class="card">
+                  <div class="card-body">
+                    <h5 class="card-title"><%= video.title %></h5>
+                    <div class="ratio ratio-16x9">
+                      <iframe src="https://www.youtube.com/embed/<%= video.embed_id %>" title="<%= video.title %>" allowfullscreen></iframe>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      </section>
+
+      <!-- reservation-sec -->
+      <section id="reservation-sec">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-12 mt-5 mb-4">
+                <h1 class="text-center my-4 mx-2 px-4 py-4">Reservation</h1>
+            </div>
+          </div>
+          <div class="row contact-box mx-auto mb-2 py-5 px-3 w-8">
+            <div class="col-md-6">
+              <div class="mb-4 input-control">
+                <span class="input-group-text d-inline"><i class="fa-solid fa-user"></i></span>
+                <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="Your Name" required>
+              </div>
+              <div class="mb-4 input-control">
+                <span class="input-group-text d-inline"><i class="fa-solid fa-envelope"></i></span>
+                <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="Your Email" required>
+              </div>
+              <div class="mb-4 input-control">
+                <span class="input-group-text d-inline"><i class="fa-solid fa-phone-flip"></i></span>
+                <input type="tel" class="form-control" id="exampleFormControlInput1" placeholder="Telephone Number" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-4 input-control">
+                <span class="input-group-text d-inline"><i class="fa-solid fa-user"></i></span>
+                <input type="number" class="form-control" id="exampleFormControlInput1" placeholder="Number of People">
+              </div>
+              <div class="mb-4 input-control">
+                <span class="input-group-text d-inline"><i class="fa-solid fa-calendar"></i></span>
+                <input type="date" class="form-control" id="exampleFormControlInput1" placeholder="Date">
+              </div>
+              <div class="mb-4 input-control">
+                <span class="input-group-text d-inline"><i class="fa-solid fa-clock"></i></span>
+                <input type="time" class="form-control" id="exampleFormControlInput1" placeholder="Time">
+              </div>
+            </div>
+            <div class=" textarea-control">
+              <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" placeholder="Special Message to Brio Resturant"></textarea>
+            </div>
+            <button type="button" class="btn btn-warning mt-4 mx-auto  px-4 py-2 ">Reserve</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- footer-sec  -->
+      <footer class="footer">
+        <div class="container">
+          <div class="row">
+            <div class="col-4 footer-contact ms-5">
+              <h1 class="footer-title footer-res-title">Brio</h1>
+              <p class="footer-text">1234 Flavor Street, Suite 56</p>
+              <p class="footer-text">Culinary City, FC 98765</p>
+              <p class="footer-text">Phone: (123) 456-7890</p>
+              <p class="footer-text">Email: contact@brio.com</p>
+              <div class="footer-map">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1d3151.8354345094743!2d144.9537353153159!3d-37.81720997975186!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzfCsDQ5JzAyLjAiUyAxNDTCsDU3JzE0LjEiRQ!5e0!3m2!1sen!2sus!4v1633074745992!5m2!1sen!2sus"
+                  width="100%"
+                  height="150"
+                  style="border:0;"
+                  allowfullscreen=""
+                  loading="lazy">
+                </iframe>
+              </div>
+            </div>
+            <div class="col-4 footer-legal ms-5 ">
+              <h2 class="footer-title ">Legal & Policy</h2>
+              <ul class="footer-list">
+                <li><a href="#" class="footer-link">Privacy Policy</a></li>
+                <li><a href="#" class="footer-link">Terms & Conditions</a></li>
+                <li><a href="#" class="footer-link">Refund & Cancellation Policy</a></li>
+              </ul>
+              <h2 class="footer-title mt-4 ">Services</h2>
+              <ul class="footer-list">
+                <li><a href="#service-sec" class="footer-link">Delivery</a></li>
+                <li><a href="#service-sec" class="footer-link">birthday Party</a></li>
+                <li><a href="#service-sec" class="footer-link">Wedding Party</a></li>
+                <li><a href="#service-sec" class="footer-link">Event Party</a></li>
+              </ul>
+
+            </div>
+            <div class="col-4 footer-opening">
+              <h2 class="footer-title">Opening Time</h2>
+              <div class="row">
+                <div class="col-6">
+                  <p class="footer-text">Monday</p>
+                  <p class="footer-text">Tuesday</p>
+                  <p class="footer-text">Wednesday</p>
+                  <p class="footer-text">Thursday</p>
+                  <p class="footer-text">Friday</p>
+                  <p class="footer-text">Saturday</p>
+                  <p class="footer-text">Sunday</p>
+                </div>
+                <div class="col-6  pe-3 ">
+                  <p class="footer-text">4pm - 12pm</p>
+                  <p class="footer-text">4pm - 12pm</p>
+                  <p class="footer-text">4pm - 12pm</p>
+                  <p class="footer-text">4pm - 12pm</p>
+                  <p class="footer-text">5pm - Midnight</p>
+                  <p class="footer-text">Closed</p>
+                  <p class="footer-text">4pm - 12pm</p>
+                </div>
+                <h2 class="footer-title mt-4">More About Restaurant</h2>
+              <div class="social-icons">
+                <a href="#" class="social-icon"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="#" class="social-icon"><i class="fab fa-tiktok"></i></a>
+                <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+      <div class="row text-center footer-copyright">
+        <p class="mt-3">Brio @ 2025 All rights reserved.</p>
+      </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
