@@ -4,6 +4,8 @@ const sqlite3 = require('sqlite3').verbose();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
+const https = require('https');
 
 const app = express();
 const PORT = 3000;
@@ -67,6 +69,21 @@ db.serialize(() => {
         if (err) console.error('Failed to add description column to videos:', err);
       });
     }
+    // Add 'host' column to indicate 'youtube' or 'cloud'
+    const hasHost = cols.some(c => c.name === 'host');
+    if (!hasHost) {
+      db.run("ALTER TABLE videos ADD COLUMN host TEXT DEFAULT 'youtube'", (err) => {
+        if (err) console.error('Failed to add host column to videos:', err);
+      });
+    }
+
+    // Add 'cloud_link' column for cloud-hosted video URLs
+    const hasCloudLink = cols.some(c => c.name === 'cloud_link');
+    if (!hasCloudLink) {
+      db.run("ALTER TABLE videos ADD COLUMN cloud_link TEXT", (err) => {
+        if (err) console.error('Failed to add cloud_link column to videos:', err);
+      });
+    }
   });
 
   // Insert default content if not exists
@@ -100,7 +117,10 @@ app.get('/', (req, res) => {
     db.all("SELECT * FROM menu", (err, menu) => {
       db.all("SELECT * FROM chefs", (err, chefs) => {
         db.all("SELECT * FROM videos", (err, videos) => {
-          res.render('index', { content, menu, chefs, videos });
+          // separate youtube-hosted and cloud-hosted videos for rendering
+          const youtubeVideos = videos.filter(v => !v.host || v.host === 'youtube');
+          const cloudVideos = videos.filter(v => v.host === 'cloud');
+          res.render('index', { content, menu, chefs, videos: youtubeVideos, cloudVideos });
         });
       });
     });
@@ -119,7 +139,12 @@ app.get('/admin', (req, res) => {
       db.all("SELECT * FROM menu", (err, menu) => {
         db.all("SELECT * FROM chefs", (err, chefs) => {
           db.all("SELECT * FROM videos", (err, videos) => {
-            res.render('admin', { content, menu, chefs, videos });
+            // for admin, provide both lists
+            const youtubeVideos = videos.filter(v => !v.host || v.host === 'youtube');
+            const cloudVideos = videos.filter(v => v.host === 'cloud');
+            // pass any warning message from query string
+            const warning = req.query && req.query.warning ? req.query.warning : null;
+            res.render('admin', { content, menu, chefs, videos: youtubeVideos, cloudVideos, warning });
           });
         });
       });
@@ -128,6 +153,39 @@ app.get('/admin', (req, res) => {
     res.redirect('/login');
   }
 });
+
+// Helper: perform HEAD request and follow redirects (up to maxRedirects)
+function checkHead(url, maxRedirects = 5) {
+  return new Promise((resolve, reject) => {
+    try {
+      const visited = 0;
+      const doHead = (currentUrl, redirectsLeft) => {
+        const parsed = new URL(currentUrl);
+        const lib = parsed.protocol === 'https:' ? https : http;
+        const options = {
+          method: 'HEAD',
+          headers: {
+            'User-Agent': 'EnglishKafe-HealthCheck/1.0'
+          }
+        };
+        const req = lib.request(currentUrl, options, (res) => {
+          // follow redirects
+          if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && redirectsLeft > 0) {
+            const next = new URL(res.headers.location, currentUrl).toString();
+            doHead(next, redirectsLeft - 1);
+            return;
+          }
+          resolve({ statusCode: res.statusCode, headers: res.headers, url: currentUrl });
+        });
+        req.on('error', (err) => reject(err));
+        req.end();
+      };
+      doHead(url, maxRedirects);
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
 
 app.get('/login', (req, res) => {
   res.render('login');
@@ -273,18 +331,57 @@ app.post('/admin/chef/delete/:id', (req, res) => {
 app.post('/admin/video', (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
 
-  const { title, youtube_link, description } = req.body;
-  // Extract video ID from YouTube link
-  const videoIdMatch = youtube_link.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/]+\/.+\/(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-  const embed_id = videoIdMatch ? videoIdMatch[1] : null;
+  const { title, description } = req.body;
+  const host = req.body.host || 'youtube';
 
-  if (embed_id) {
-    db.run("INSERT INTO videos (title, youtube_link, embed_id, description) VALUES (?, ?, ?, ?)", [title, youtube_link, embed_id, description || ''], (err) => {
-      if (err) console.error(err);
+  if (host === 'youtube') {
+    const youtube_link = req.body.youtube_link || '';
+    // Extract video ID from YouTube link
+    const videoIdMatch = youtube_link.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/]+\/.+\/(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    const embed_id = videoIdMatch ? videoIdMatch[1] : null;
+
+    if (embed_id) {
+      db.run("INSERT INTO videos (title, youtube_link, embed_id, description, host) VALUES (?, ?, ?, ?, ?)", [title, youtube_link, embed_id, description || '', 'youtube'], (err) => {
+        if (err) console.error(err);
+        res.redirect('/admin');
+      });
+    } else {
+      // invalid youtube link
       res.redirect('/admin');
+    }
+  } else if (host === 'cloud') {
+    const cloud_link = req.body.cloud_link || '';
+    if (!cloud_link) return res.redirect('/admin');
+    // Perform HEAD-check on the cloud link to warn about content-type or range support
+    checkHead(cloud_link).then(({ statusCode, headers }) => {
+      const warnings = [];
+      const contentType = headers['content-type'] || '';
+      const acceptRanges = headers['accept-ranges'] || headers['Accept-Ranges'] || '';
+      if (!contentType.startsWith('video/')) {
+        warnings.push(`Content-Type is '${contentType || 'unknown'}' (not a recognized video type)`);
+      }
+      if (!(acceptRanges && acceptRanges.toLowerCase().includes('bytes'))) {
+        warnings.push("Server doesn't advertise 'Accept-Ranges: bytes' — seeking may not work properly.");
+      }
+
+      db.run("INSERT INTO videos (title, description, host, cloud_link) VALUES (?, ?, ?, ?)", [title, description || '', 'cloud', cloud_link], (err) => {
+        if (err) console.error(err);
+        let redirectUrl = '/admin';
+        if (warnings.length) {
+          redirectUrl += '?warning=' + encodeURIComponent(warnings.join(' '));
+        }
+        res.redirect(redirectUrl);
+      });
+    }).catch((err) => {
+      // HEAD failed; still insert but warn admin
+      const warning = `HEAD request failed: ${err.message}`;
+      db.run("INSERT INTO videos (title, description, host, cloud_link) VALUES (?, ?, ?, ?)", [title, description || '', 'cloud', cloud_link], (dbErr) => {
+        if (dbErr) console.error(dbErr);
+        res.redirect('/admin?warning=' + encodeURIComponent(warning));
+      });
     });
   } else {
-    res.redirect('/admin'); // Invalid link
+    res.redirect('/admin');
   }
 });
 
@@ -304,27 +401,63 @@ app.post('/admin/video/update/:id', (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
 
   const id = req.params.id;
-  const { title, youtube_link, description } = req.body;
-  // Extract video ID from YouTube link
-  const videoIdMatch = youtube_link.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/]+\/.+\/(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-  const embed_id = videoIdMatch ? videoIdMatch[1] : null;
+  const host = req.body.host || 'youtube';
+  const title = req.body.title || '';
+  const description = req.body.description || '';
 
-  if (embed_id) {
-    db.run("UPDATE videos SET title = ?, youtube_link = ?, embed_id = ?, description = ? WHERE id = ?", [title, youtube_link, embed_id, description || '', id], (err) => {
+  if (host === 'youtube') {
+    const youtube_link = req.body.youtube_link || '';
+    const videoIdMatch = youtube_link.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/]+\/.+\/(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    const embed_id = videoIdMatch ? videoIdMatch[1] : null;
+
+    if (embed_id) {
+      db.run("UPDATE videos SET title = ?, youtube_link = ?, embed_id = ?, description = ?, host = ?, cloud_link = NULL WHERE id = ?", [title, youtube_link, embed_id, description, 'youtube', id], (err) => {
+        if (err) console.error(err);
+        res.redirect('/admin');
+      });
+    } else {
+      // update without changing embed_id
+      db.run("UPDATE videos SET title = ?, youtube_link = ?, description = ?, host = ? WHERE id = ?", [title, youtube_link, description, 'youtube', id], (err) => {
+        if (err) console.error(err);
+        res.redirect('/admin');
+      });
+    }
+  } else if (host === 'cloud') {
+    const cloud_link = req.body.cloud_link || '';
+    db.run("UPDATE videos SET title = ?, description = ?, host = ?, cloud_link = ?, youtube_link = NULL, embed_id = NULL WHERE id = ?", [title, description, 'cloud', cloud_link, id], (err) => {
       if (err) console.error(err);
       res.redirect('/admin');
     });
   } else {
-    // If the link is invalid, still update title/description but leave embed_id unchanged
-    db.run("UPDATE videos SET title = ?, youtube_link = ?, description = ? WHERE id = ?", [title, youtube_link, description || '', id], (err) => {
-      if (err) console.error(err);
-      res.redirect('/admin');
-    });
+    res.redirect('/admin');
   }
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+});
+
+// Endpoint: POST /admin/check-url
+// Expects JSON { url: 'https://...' }
+app.post('/admin/check-url', (req, res) => {
+  if (!req.session.loggedIn) return res.status(401).json({ error: 'Unauthorized' });
+  const { url } = req.body || {};
+  if (!url) return res.status(400).json({ error: 'Missing url' });
+
+  checkHead(url).then(({ statusCode, headers }) => {
+    const warnings = [];
+    const contentType = headers['content-type'] || '';
+    const acceptRanges = headers['accept-ranges'] || headers['Accept-Ranges'] || '';
+    if (!contentType.startsWith('video/')) {
+      warnings.push(`Content-Type is '${contentType || 'unknown'}' (not a recognized video type)`);
+    }
+    if (!(acceptRanges && acceptRanges.toLowerCase().includes('bytes'))) {
+      warnings.push("Server doesn't advertise 'Accept-Ranges: bytes' — seeking may not work properly.");
+    }
+    res.json({ statusCode, headers, warnings });
+  }).catch((err) => {
+    res.status(500).json({ error: err.message });
+  });
 });
 
 // Default content insertion

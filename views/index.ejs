@@ -150,6 +150,43 @@
         </div>
      </section>
 
+            <!-- cloud-videos-sec -->
+            <section id="cloud-videos-sec">
+              <div class="container">
+                <div class="row">
+                  <div class="col-12 mt-5 mb-3">
+                    <h1 class="text-center my-4 mx-2 px-4 py-4">Cloud Videos</h1>
+                  </div>
+                </div>
+                <div class="row">
+                  <% if (typeof cloudVideos !== 'undefined' && cloudVideos.length) { %>
+                    <% cloudVideos.forEach(video => { %>
+                      <div class="col-md-6 mb-4">
+                        <div class="card">
+                          <div class="card-body">
+                            <h5 class="card-title"><%= video.title %></h5>
+                            <div class="ratio ratio-16x9">
+                              <!-- Use data-cloud-link so client JS can handle HLS (.m3u8) or direct MP4 links -->
+                              <video controls preload="metadata" data-cloud-link="<%= video.cloud_link %>" style="width:100%;height:100%">
+                                Your browser does not support the video tag.
+                              </video>
+                            </div>
+                            <% if (video.description) { %>
+                              <p class="video-description"><%= video.description %></p>
+                            <% } %>
+                          </div>
+                        </div>
+                      </div>
+                    <% }); %>
+                  <% } else { %>
+                    <div class="col-12">
+                      <p class="text-muted">No cloud-hosted videos available yet.</p>
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+            </section>
+
      <!-- service-sec  -->
       <section id="service-sec">
         <div class="container">
@@ -441,5 +478,32 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/scroll.js"></script>
+    <!-- hls.js for playing .m3u8 HLS manifests from cloud hosts (e.g. Bunny.net Stream/Storage) -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('video[data-cloud-link]').forEach(function(videoEl) {
+          const url = videoEl.getAttribute('data-cloud-link');
+          if (!url) return;
+
+          // If link looks like HLS manifest (.m3u8)
+          if (url.endsWith('.m3u8')) {
+            if (window.Hls && Hls.isSupported()) {
+              const hls = new Hls();
+              hls.loadSource(url);
+              hls.attachMedia(videoEl);
+            } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+              // Safari supports HLS natively
+              videoEl.src = url;
+            } else {
+              console.warn('HLS not supported in this browser');
+            }
+          } else {
+            // For MP4 and other direct video files just set the src
+            videoEl.src = url;
+          }
+        });
+      });
+    </script>
   </body>
 </html>
